@@ -47,6 +47,21 @@ async function run() {
 
         res.send(result);
     })
+    app.put('/inventoryitem/:id',async(req,res)=>{
+        const id = req.params.id;
+        const quantity = req.body.newQuantity;
+        console.log(quantity);
+        const filter = {_id : ObjectId(id)}
+        const option = {upsert:true};
+        const update = {
+            $set : {
+                quantity
+            }
+        };
+        const result = await itemsCollection.updateOne(filter,update,option);
+        res.send(result);
+
+    })
 
     app.delete('/items/:id',async(req,res)=>{
         const id = req.params.id;
