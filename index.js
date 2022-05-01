@@ -27,13 +27,19 @@ async function run() {
         const result = await cursor.toArray();
         res.send(result);
     });
-    app.get('/myitem/:id',async(req,res)=>{
+    app.get('/inventoryitem/:id',async(req,res)=>{
         const id = req.params.id;
         const query = {_id : ObjectId(id)}
         console.log(id);
         const result = await itemsCollection.findOne(query);
         res.send(result);
     });
+    app.get('/myitems',async(req,res)=>{
+        const query = req.query;
+        const cursor = itemsCollection.find(query);
+        const result = await cursor.toArray();
+        res.send(result);
+    })
 
     app.post('/items',async(req,res)=>{
         const data = req.body;
