@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 require('dotenv').config()
+const jwt = require('jsonwebtoken');
 
 
 //middlewares
@@ -16,6 +17,20 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 const itemsCollection = client.db("itemsDB").collection("items");
 
+
+const verifyToken = (accessToken) => {
+    let email;
+    jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, function (err, decoded){
+        if(err){
+            email = "Invalid Email"
+        }
+        if(decoded){
+            console.log(decoded.email);
+            email = decoded.email;
+        }
+    });
+    return email;
+}
 async function run() {
     try {
       await client.connect();
@@ -35,10 +50,22 @@ async function run() {
         res.send(result);
     });
     app.get('/myitems',async(req,res)=>{
+        const tokenInfo = req.headers.authorization;
+        const [email,accessToken] = tokenInfo.split(" ");
+        const decodedEmail = verifyToken(accessToken);
+        console.log(decodedEmail,'dod');
         const query = req.query;
-        const cursor = itemsCollection.find(query);
-        const result = await cursor.toArray();
-        res.send(result);
+
+        if(email === decodedEmail){
+
+            const cursor = itemsCollection.find(query);
+            const result = await cursor.toArray();
+            
+            res.send({result,success:true});
+        }
+        else{
+            res.send({result:[],success:false});
+        }
     })
 
     app.post('/items',async(req,res)=>{
@@ -70,6 +97,21 @@ async function run() {
         res.send(result);
         console.log(id);
     })
+
+    app.post("/login",(req,res)=>{
+        
+        const email = req.body;
+        const token = jwt.sign(email,process.env.ACCESS_TOKEN_SECRET);
+
+        res.send({token})
+    })
+    // app.post("/login", (req, res) => {
+    //     const email = req.body;
+
+    //     const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET);
+
+    //     // res.send({ token })
+    // })
 
     } finally {
     //   await client.close();
