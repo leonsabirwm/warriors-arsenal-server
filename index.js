@@ -50,8 +50,9 @@ async function run() {
         res.send(result);
     });
     app.get('/myitems',async(req,res)=>{
-        const tokenInfo = req.headers.authorization;
-        const [email,accessToken] = tokenInfo.split(" ");
+        const tokenInfo = req.headers?.authorization;
+        if(tokenInfo){
+            const [email,accessToken] = tokenInfo.split(" ");
         const decodedEmail = verifyToken(accessToken);
         console.log(decodedEmail,'dod');
         const query = req.query;
@@ -62,6 +63,10 @@ async function run() {
             const result = await cursor.toArray();
             
             res.send({result,success:true});
+        }
+        else{
+            res.send({result:[],success:false});
+        }
         }
         else{
             res.send({result:[],success:false});
